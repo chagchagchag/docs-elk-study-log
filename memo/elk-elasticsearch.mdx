@@ -89,6 +89,24 @@ Elasticsearch 는 검색에 특화된 저장소이며 관계형 데이터베이�
 
 
 
+## Elasticsearch 의 단점
+
+- Near Real Time (NRT) : 실시간이 아닙니다. 인덱싱된 데이터는 1초 뒤에 검색이 가능합니다.
+- 트랜잭션, 롤백 불가 : 리소스 소모가 큰 롤백이나 트랜잭션은 지원하지 않습니다.
+- 데이터 업데이트 불가 : 기존 문서를 삭제 후 변경내용으로 새로운 문서를 생성하는 reindexing 방식이기에 비용이 큽니다.
+
+<br/>
+
+
+
+## Indexing (색인, 인덱싱)
+
+데이터가 인덱스 내에 도큐먼트로 저장될 때 그 데이터를 토큰들로 분해한 후 저장하는 과정을 의미합니다. 한국어로는 색인이라는 말을 자주 씁니다. 한국어로 치환한 단어가 조금 더 이질감이 느껴지지만, 자주 접하게 되는 단어이기에 알아두는 것이 좋습니다.<br/>
+
+<br/>
+
+
+
 ## Full Text Search (전문 검색)
 
 텍스트 전체를 색인해서 특정 단어가 포함된 문서를 검색하는 것을 의미하며, Elasticsearch 에서 제공하는 다양한 플러그인을 조합해서 더 빠른 검색이 가능합니다.<br/>
@@ -111,25 +129,107 @@ Inverted Index 는 특정 Term 을 포함하고 있는 문서에 대한 인덱�
 
 
 
-## Elasticsearch 의 단점
+## Cluster, Node, Index, Shard
 
-- Near Real Time (NRT) : 실시간이 아닙니다. 인덱싱된 데이터는 1초 뒤에 검색이 가능합니다.
-- 트랜잭션, 롤백 불가 : 리소스 소모가 큰 롤백이나 트랜잭션은 지원하지 않습니다.
-- 데이터 업데이트 불가 : 기존 문서를 삭제 후 변경내용으로 새로운 문서를 생성하는 reindexing 방식이기에 비용이 큽니다.
+![](./img/elk-elasticsearch/2.png)
+
+> shard 의 번호들이 어떤 인덱스에 어떤 shard 번호들이 배치되어있고 2개씩 복제되어 있는지 확인해보세요.
 
 <br/>
 
 
 
-## Elasticsearch 클러스터, 노드, 샤드
+Cluster
 
-https://esbook.kimjmin.net/03-cluster/3.2-index-and-shards
+- 노드의 집합입니다. 노드 들을 관리하며 색인화, 검색 기능을 Cluster 레벨에서 제공합니다.
+- Cluster 는 고유한 이름을 가지며, 이름이 다른 Cluster 들을 여러개 두는 것 역시 가능합니다. 
+- Cluster 를 Node 1기로만 구성하는 것 역시 가능합니다.
 
-- 
+Node
+
+- Elasticsearch 내의 개별 노드를 의미합니다.
+- 데이터 저장, 클러스터가 개별 노드들을 이용해서 노드에 indexing, 검색을 수행하게끔 합니다.
+- Node 에도 고유한 이름이 부여되며, 기본값은 UUID 방식으로 지정됩니다.
+- 클러스터 이름을 지정해서 특정 클러스터에 소속되게끔 지정하는 것 역시 가능합니다.
+
+Index
+
+- Document 를 모아두는 곳을 Index 라고 합니다. 관계형 데이터베이스에서 데이터베이스에 해당하는 개념이 Index 입니다.
+- Elasticsearch 에 데이터를 저장하는 것을 Indexing (인덱싱) 이라고 부릅니다.
+- Elasticsearch
+
+Shard
+
+- 인덱스는 하나 이상의 샤드단위로 분산해서 저장하는 것이 가능합니다.
 
 
 
-## OpenSearch vs AWS Opensearch vs Elasticsearch
+<br/>
+
+
+
+## Shard, Primary Shard, Replica Shard
+
+![](./img/elk-elasticsearch/3.png)
+
+Index 는 하나 이상의 Shard 로 분리할 수 있고, 데이터를 Shard 단위로 분산해서 저장할 수 있습니다. 카프카의 토픽을 파티션 단위로 나누는 것과 유사한 개념입니다.<br/>
+
+각각의 Node 에는 Primary Shard 와 Replica Shard 를 둘 수 있습니다. Replica Shard 는 장애 상황에 대비하기 위해 Primary Shard 의 복제본으로 두는 Shard 입니다.<br/>
+
+
+
+![](./img/elk-elasticsearch/4.png)
+
+만약 Node 0 번에 장애가 나면, Node 0 에 있는 Primary Shard 인 Shard 0 은 사용할 수 없게 됩니다. 이 경우 Node 2 에 복제를 해둔 Replica Shard 중 Shard 0을 Primary Shard 가 되도록 지정됩니다.<br/>
+
+
+
+![](./img/elk-elasticsearch/5.png)
+
+장애가 난 Node 0 번이 복구가 되기를 기다려도 복구가 되지 않을 경우 Node 0 의 레플리카 샤드 들을 다른 노드 들로 복제하는 작업이 수행됩니다. <br/>
+
+운영을 위해 미리 설정해둔 샤드의 개수가 있는데, 장애가 난 Node 로 인해 레플리카 갯수가 일정 시간 동안 유지되지 않으므로 장애가 나지 않은 다른 노드의 레플리캬 샤드 들을 복제하게 됩니다.<br/>
+
+
+
+## 마스터 노드, 데이터 노드, 코디네이팅 노드, 인제스트 노드
+
+마스터 노드
+
+- 마스터 노드는 클러스터 상태 정보를 관리합니다. 지연이 없고 네트워크 가용성(Availability)가 좋은 노드를 마스터 노드로 선택합니다.
+- 클러스터를 노드 1기로 구성하면 1기의 노드가 마스터 노드가 됩니다. 
+- 마스터 노드 다운시 다른 마스터 후보 노드 중 하나가 마스터 노드로 선출됩니다.
+- 마스터 후보 노드 들은 node.data:false 로 설정해서 노드 역할만 하며, 데이터는 저장하지 않도록 지정하는 것 역시 가능합니다.
+- 마스터 후보 노드 (master eligible) 들은 마스터 노드의 정보들을 공유하고 있으며 즉시 마스터 역할을 수행 가능합니다. 노드, 샤드의 갯수가 많은 상황이면 일부 노드만 마스터 노드 옵션을 true, 나머지는 false 로 설정해서 부하를 줄이는 편입니다.
+- 최소 마스터 대수 설정에 관련된 내용도 있는데 여기에 대해서는 Split Brain 에서 정리합니다.
+
+데이터 노드
+
+- 도큐먼트가 저장되는 노드입니다.
+- 인덱싱 작업에 리소스가 많이 소모되는 노드이며, 리소스를 모니터링하는 것이 필요합니다.
+- 운영환경에서는 마스터 노드와 데이터 노드를 분리하는 것이 권장되며, 인덱싱할 도큐먼트가 적다면 굳이 분리하지 않아도 됩니다.
+
+코디네이팅 노드
+
+- 들어온 요청을 분산시켜주는 노드입니다.
+- 라운드 로빈 방식입니다.
+
+인제스트 노드
+
+- Indexing(색인) 전에 데이터를 전처리하는 노드 입니다.
+- 데이터 포맷 변경을 위해 스크립트로 파이프라인을 구성하기도 합니다. 
+
+<br/>
+
+
+
+## Split Brain
+
+
+
+
+
+## Opensearch vs AWS Opensearch vs Elasticsearch
 
 https://www.elastic.co/kr/amazon-opensearch-service
 
@@ -167,18 +267,9 @@ https://www.elastic.co/kr/amazon-opensearch-service
 
 
 
-## AWS OpenSearch vs OpenSearch
-
-
-
-
-
-
-
 ## CRUD Rest API
 
 - CRUD(Create, Read, Update, Delete) 수행
 
 
 
-#
