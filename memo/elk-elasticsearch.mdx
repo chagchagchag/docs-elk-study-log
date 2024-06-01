@@ -113,7 +113,7 @@ Elasticsearch 는 검색에 특화된 저장소이며 관계형 데이터베이�
 
 
 
-## Inverted Index
+## Inverted Index (todo)
 
 역색인을 의미합니다. Inverted Index 를 이용하면 인덱스 내에서 검색을 원하는 단어가 포함된 모든 문서의 위치를 검색 가능합니다.<br/>
 
@@ -223,9 +223,21 @@ Index 는 하나 이상의 Shard 로 분리할 수 있고, 데이터를 Shard �
 
 
 
-## Split Brain
+## Split Brain (todo)
 
+마스터 후보 노드 사이에 네트워크가 단절 되었을 때 마스터 후보 노드 각각은 마스터로 승격됩니다. 이렇게 되면 클러스터가 두개가 되어서 독립적인 클러스터 두개로 동작하게 되는 현상이 발생합니다.<br/>
 
+이렇게해서 발생한 독립적인 클러스터 두개는 클러스터 마다 각각 독립적으로 데이터 쓰기, 업데이트가 발생하는 문제가 생기고, 개별 클러스터에 존재하는 마스터 노드로 인해 데이터가 동기화되지 않는 문제가 있습니다.<br/>
+
+여기에 대한 해결 방법들은 아래와 같습니다.
+
+- discovery.zen.minimum\_master\_nodes 옵션을 아래와 같이 설정해줍니다.
+  - (master\_eligible\_nodes/2) + 1
+- 마스터 노드 후보 갯수를 홀수로 지정
+- split brain 발생 후 네트워크 복구 시 투표를 통해 두기의 클러스터 중 하나를 선택 후 선택된 클러스터를 기준으로 데이터를 맞춥니다.
+  - 이 부분에 대해서는 조금 더 자료를 찾아본 후 정리를 하겠습니다.
+
+<br/>
 
 
 
@@ -266,10 +278,6 @@ https://www.elastic.co/kr/amazon-opensearch-service
 <br/>
 
 
-
-## CRUD Rest API
-
-- CRUD(Create, Read, Update, Delete) 수행
 
 
 
