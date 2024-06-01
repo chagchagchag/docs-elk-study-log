@@ -1,3 +1,4 @@
 {
-    "elk-elasticsearch": "Elasticsearch"
+    "elk-elasticsearch": "Elasticsearch",
+    "document-api": "Document API"
 }
