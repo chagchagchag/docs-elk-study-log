@@ -1,6 +1,8 @@
 {
   "index": "Introduction",
   "elasticsearch": "Elasticsearch",
+  "search-api": "search-api",
+  "aggregation": "aggregation",
   "contact": {
     "title": "Contact ↗",
     "type": "page",
