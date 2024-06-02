@@ -1,8 +1,8 @@
 {
   "index": "Introduction",
   "elasticsearch": "Elasticsearch",
-  "search-api": "search-api",
-  "aggregation": "aggregation",
+  "logstash": "logstash",
+  "practice-1": "실습 (1)",
   "contact": {
     "title": "Contact ↗",
     "type": "page",

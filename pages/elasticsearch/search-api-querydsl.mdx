@@ -2,9 +2,100 @@
 
 ## 세팅 & 예제 데이터 import
 - [세팅 & 예제 데이터 import](/elasticsearch/settings-and-import-example-data) 를 참고해주세요.
+
+
+
+세팅 & 예제 데이터 import 에서도 설명하고 있지만, 이번 예제에서 사용하는 예제 도큐먼트들의 생성 구문을 여기에서 한번 더 정리해보면 아래와 같습니다. 아래 명령을 키바나 콘솔에서 입력해주세요
+
+```python
+POST _bulk
+{ "index": {"_index": "logs_index_202406", "_id": "1"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-coupon-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "2"} }
+{ "status": "NETWORK_ERROR", "message": "PAYMENT_API_TIMEOUT", "occurred-service": "abc-payment-api", "vendor" : "inicis", "bank" : "toss" }
+{ "index": {"_index": "logs_index_202406", "_id": "3"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-payment-api", "vendor" : "NAVER", "bank" : "toss" }
+{ "index": {"_index": "logs_index_202406", "_id": "4"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "5"} }
+{ "status": "ILLEGAL_ARGUMENT", "message": "DUPLICATED_PRIMARY_KEY", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "6"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "7"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "8"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-order-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "9"} }
+{ "status": "CONNECTIONLESS", "message": "CIRCUIT_BREAKER_ON", "occurred-service": "abc-delivery-api" }
+```
+
 <br/>
 
+
+
 ## Search API
+
+Elasticsearch 의 Search API 는 여러가지의 검색 방식을 제공하는데 아래와 같습니다.
+
+- URI
+  - 간편한 방식의 쿼리입니다.
+- Multitenancy 
+  - 여러 개의 인덱스를 묶어서 함께 검색할 때 사용합니다. 
+  - `*` 과 같은 표현식으로 비슷한 접두사를 가지는 인덱스들을 선택해서 선택된 인덱스들에 대해 일괄적으로 조회하는 것이 가능합니다.
+- QueryDSL (RequestBody)
+  - 조금 더 정밀하고 강력한 검색을 위해 RequestBody 로 json 형식의 QueryDSL (Domain Specific Language)를 사용하는 검색방식입니다. 
+
+<br/>
+
+
+
+## URI
+
+간편한 방식의 쿼리이며, 간단하게 데이터가 존재하는지 콘솔에서 수기로 확인하려고 할때 사용하기도 하고, 복잡한 쿼리가 불필요할 때 사용하기도 합니다.
+
+- `field:검색어` 
+- 조건식 결합 : AND, OR 모두 지원
+  - 조건식1 AND 조건식2
+  - 조건식2 OR 조건식3
+- query parameter 는 굉장히 다양한 파라미터가 존재합니다.
+  - 참고 : [elastic.co - Query parameters](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/search-search.html#search-search-api-path-params)
+
+
+
+<br/>
+
+
+
+```python
+```
+
+<br/>
+
+
+
+## Multitenancy
+
+
+
+
+
+<br/>
+
+
+
+## QueryDSL (RequestBody)
+
+
+
+
+
+<br/>
+
+
+
+
+
+
 
 
 

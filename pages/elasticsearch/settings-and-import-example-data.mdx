@@ -167,3 +167,34 @@ GET kibana_sample_data_ecommerce/_search
 ```
 
 <br/>
+
+
+
+
+
+## search API 연습을 위한 예제 insert
+
+아래 데이터를 콘솔에서 입력해주세요
+
+```python
+POST _bulk
+{ "index": {"_index": "logs_index_202406", "_id": "1"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-coupon-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "2"} }
+{ "status": "NETWORK_ERROR", "message": "PAYMENT_API_TIMEOUT", "occurred-service": "abc-payment-api", "vendor" : "inicis", "bank" : "toss" }
+{ "index": {"_index": "logs_index_202406", "_id": "3"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-payment-api", "vendor" : "NAVER", "bank" : "toss" }
+{ "index": {"_index": "logs_index_202406", "_id": "4"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "5"} }
+{ "status": "ILLEGAL_ARGUMENT", "message": "DUPLICATED_PRIMARY_KEY", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "6"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "7"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "8"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-order-api" }
+{ "index": {"_index": "logs_index_202406", "_id": "9"} }
+{ "status": "CONNECTIONLESS", "message": "CIRCUIT_BREAKER_ON", "occurred-service": "abc-delivery-api" }
+```
+
