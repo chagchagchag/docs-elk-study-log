@@ -1,4 +1,7 @@
 {
     "elk-elasticsearch": "Elasticsearch",
-    "document-api": "Document API"
+    "settings-and-import-example-data": "Settings, Example Data Import",
+    "document-api": "Document API",
+    "search-api-querydsl": "Search API, Querydsl",
+    "aggregation": "Aggregation"
 }

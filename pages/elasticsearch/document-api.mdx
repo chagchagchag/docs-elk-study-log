@@ -1,64 +1,8 @@
 ## Document API
 
-## ELK 스택 설치
-
-- [github.com/deviantony/docker-elk](https://github.com/deviantony/docker-elk) 을 clone 
-- `.env` 파일 내의 주요 패스워드 들 수정
-  - 비밀번호는 8자?이상이어야 에러가 나지 않습니다.
-
-- docker-compose up setup
-  - setup-1 exited with code 0 이라는 메시지가 뜨면 정상설치 된 것 입니다.
-
-- docker-compose up -d
-- kibana 는 http://localhost:5601 로 접속 가능하며, user, password 는 아래와 같이 입력합니다.
-  - user : elastic
-  - password : `.env` 파일 내에 입력한 패스워드
-
-
+## 세팅 & 예제 데이터 import
+- [세팅 & 예제 데이터 import](/elasticsearch/settings-and-import-example-data) 를 참고해주세요.
 <br/>
-
-
-
-## 콘솔 접속
-
-![](./img/document-api/1.png)
-
-
-
-
-
-<br/>
-
-
-
-콘솔은 아래와 같이 사용 가능합니다.<br/>
-
-아래의 코드를 입력합니다. 
-
-```plain
-PUT helloworld/_doc/1
-{
-  "name": "aaa",
-  "message": "This is aaa"
-}
-```
-
-<br/>
-
-
-
-그리고 오른쪽 상단의 Run 버튼을 누르거나 Ctrl + Enter 키를 눌러서 명령을 실행합니다.
-
-![](./img/document-api/2.png)
-
-<br/>
-
-
-
-이렇게 하면 index 를 생성해두지 않은 상태라면 새로운 index 가 생성됩니다.<br/>
-
-<br/>
-
 
 
 ## PUT
