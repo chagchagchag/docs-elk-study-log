@@ -7,6 +7,8 @@
 
 세팅 & 예제 데이터 import 에서도 설명하고 있지만, 이번 예제에서 사용하는 예제 도큐먼트들의 생성 구문을 여기에서 한번 더 정리해보면 아래와 같습니다. 아래 명령을 키바나 콘솔에서 입력해주세요
 
+`logs_index_202406`
+
 ```python
 POST _bulk
 { "index": {"_index": "logs_index_202406", "_id": "1"} }
@@ -31,6 +33,32 @@ POST _bulk
 
 <br/>
 
+`logs_index_202407`
+
+```python
+POST _bulk
+{ "index": {"_index": "logs_index_202405", "_id": "1"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-coupon-api" }
+{ "index": {"_index": "logs_index_202405", "_id": "2"} }
+{ "status": "NETWORK_ERROR", "message": "PAYMENT_API_TIMEOUT", "occurred-service": "abc-banking-api", "vendor" : "inicis", "bank" : "toss" }
+{ "index": {"_index": "logs_index_202405", "_id": "3"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-banking-api", "vendor" : "NAVER", "bank" : "toss" }
+{ "index": {"_index": "logs_index_202405", "_id": "4"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "logs_index_202405", "_id": "5"} }
+{ "status": "ILLEGAL_ARGUMENT", "message": "DUPLICATED_PRIMARY_KEY", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "logs_index_202405", "_id": "6"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "logs_index_202405", "_id": "7"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "logs_index_202405", "_id": "8"} }
+{ "status": "OK", "message": "OK", "occurred-service": "abc-order-api" }
+{ "index": {"_index": "logs_index_202405", "_id": "9"} }
+{ "status": "CONNECTIONLESS", "message": "CIRCUIT_BREAKER_ON", "occurred-service": "abc-delivery-api" }
+```
+
+<br/>
+
 
 
 ## Search API
@@ -44,6 +72,19 @@ Elasticsearch 의 Search API 는 여러가지의 검색 방식을 제공하는�
   - `*` 과 같은 표현식으로 비슷한 접두사를 가지는 인덱스들을 선택해서 선택된 인덱스들에 대해 일괄적으로 조회하는 것이 가능합니다.
 - QueryDSL (RequestBody)
   - 조금 더 정밀하고 강력한 검색을 위해 RequestBody 로 json 형식의 QueryDSL (Domain Specific Language)를 사용하는 검색방식입니다. 
+
+<br/>
+
+QueryDSL 에서 query 필드 내에 사용할 수 있는 연산들은 아래와 같습니다.
+
+- range : gte, lte , ge, le
+- bool : must, must\_not, should, filter
+- relevancy 
+- full text query
+- match
+- match\_phrase query
+- multi-match query
+- match all
 
 <br/>
 
@@ -62,11 +103,250 @@ Elasticsearch 의 Search API 는 여러가지의 검색 방식을 제공하는�
 
 
 
+### e.g. `message:CIRCUIT_BREAKER_ON`
+
+```python
+POST logs_index_202406/_search?q=message:CIRCUIT_BREAKER_ON
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 6,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 1,
+      "relation": "eq"
+    },
+    "max_score": 1.89712,
+    "hits": [
+      {
+        "_index": "logs_index_202406",
+        "_id": "9",
+        "_score": 1.89712,
+        "_source": {
+          "status": "CONNECTIONLESS",
+          "message": "CIRCUIT_BREAKER_ON",
+          "occurred-service": "abc-delivery-api"
+        }
+      }
+    ]
+  }
+}
+```
+
+<br/>
+
+### e.g. `occurred-service:"abc-statistics-api"` 
+
+- 꼭 `""` (쌍따옴표)로 감싸줘야 원하는 결과가 검색됩니다.
+
+```python
+POST logs_index_202406/_search?q=occurred-service:"abc-statistics-api"
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 2,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 2,
+      "relation": "eq"
+    },
+    "max_score": 1.4888809,
+    "hits": [
+      {
+        "_index": "logs_index_202406",
+        "_id": "6",
+        "_score": 1.4888809,
+        "_source": {
+          "status": "OK",
+          "message": "OK",
+          "occurred-service": "abc-statistics-api"
+        }
+      },
+      {
+        "_index": "logs_index_202406",
+        "_id": "7",
+        "_score": 1.4888809,
+        "_source": {
+          "status": "OK",
+          "message": "OK",
+          "occurred-service": "abc-statistics-api"
+        }
+      }
+    ]
+  }
+}
+```
+
 <br/>
 
 
 
+### e.g. OR 연산 : NETWORK\_ERROR OR CONNECTIONLESS 검색 
+
 ```python
+POST logs_index_202406/_search?q=status:"NETWORK_ERROR" OR status:"CONNECTIONLESS"
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 2,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 2,
+      "relation": "eq"
+    },
+    "max_score": 1.89712,
+    "hits": [
+      {
+        "_index": "logs_index_202406",
+        "_id": "2",
+        "_score": 1.89712,
+        "_source": {
+          "status": "NETWORK_ERROR",
+          "message": "PAYMENT_API_TIMEOUT",
+          "occurred-service": "abc-payment-api",
+          "vendor": "inicis",
+          "bank": "toss"
+        }
+      },
+      {
+        "_index": "logs_index_202406",
+        "_id": "9",
+        "_score": 1.89712,
+        "_source": {
+          "status": "CONNECTIONLESS",
+          "message": "CIRCUIT_BREAKER_ON",
+          "occurred-service": "abc-delivery-api"
+        }
+      }
+    ]
+  }
+}
+```
+
+<br/>
+
+### e.g. AND 연산 : `occurred-service:"abc-delivery-api" AND message:"CIRCUIT_BREAKER_ON"`
+
+```python
+POST logs_index_202406/_search?q=occurred-service:"abc-delivery-api" AND message:"CIRCUIT_BREAKER_ON"
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 18,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 1,
+      "relation": "eq"
+    },
+    "max_score": 3.8968265,
+    "hits": [
+      {
+        "_index": "logs_index_202406",
+        "_id": "9",
+        "_score": 3.8968265,
+        "_source": {
+          "status": "CONNECTIONLESS",
+          "message": "CIRCUIT_BREAKER_ON",
+          "occurred-service": "abc-delivery-api"
+        }
+      }
+    ]
+  }
+}
+```
+
+<br/>
+
+### e.g. q="CIRCUIT_BREAKER_ON"
+
+전체 index 에서 원하는 단어가 있는지를 조회
+
+```python
+POST logs_index_202406/_search?q="CIRCUIT_BREAKER_ON"
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 10,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 1,
+      "relation": "eq"
+    },
+    "max_score": 1.89712,
+    "hits": [
+      {
+        "_index": "logs_index_202406",
+        "_id": "9",
+        "_score": 1.89712,
+        "_source": {
+          "status": "CONNECTIONLESS",
+          "message": "CIRCUIT_BREAKER_ON",
+          "occurred-service": "abc-delivery-api"
+        }
+      }
+    ]
+  }
+}
 ```
 
 <br/>
@@ -75,9 +355,16 @@ Elasticsearch 의 Search API 는 여러가지의 검색 방식을 제공하는�
 
 ## Multitenancy
 
+- 여러 개의 인덱스를 묶어서 함께 검색할 때 사용합니다. 
+- `*` 과 같은 표현식으로 비슷한 접두사를 가지는 인덱스들을 선택해서 선택된 인덱스들에 대해 일괄적으로 조회하는 것이 가능합니다.
 
 
 
+### e.g. 2024년도 5월, 2024년도 6월 기록을 함께 조회
+
+```python
+GET logs_index_2024*/_search
+```
 
 <br/>
 
@@ -85,11 +372,636 @@ Elasticsearch 의 Search API 는 여러가지의 검색 방식을 제공하는�
 
 ## QueryDSL (RequestBody)
 
+조금 더 정밀하고 강력한 검색을 위해 RequestBody 로 json 형식의 QueryDSL (Domain Specific Language)를 사용하는 검색방식입니다. <br/>
 
+QueryDSL 연산에서 사용할 수 있는 연산자들은 아래와 같습니다.
+
+- size : 검색으로 돌려받은 document 갯수를 의미합니다.
+- from : 몇번째 문서부터 를 의미
+- timeout : 검색 요청 시 timeout 을 지정
+  - timeout 을 작게 지정할 경우 전체 샤드에서 timeout 을 넘기지 않은 문서만 출력됩니다.
+- \_source : 검색 시 필요한 필드만 추려서 리턴하려 할때 사용합니다.
+- query : 검색 식의 쿼리문
+- aggs : Aggregation 을 지정할 때 사용하는 필드입니다.
+- sort : 문서의 정렬 방식을 지정합니다.
+
+<br/>
+
+형식
+
+```json
+{
+    "size": "",
+    "from": "",
+    "timeout": "",
+    "_source": "",
+    "query": "",
+    "aggs": "",
+    "sort": ""
+}
+```
+
+<br/>
+
+
+
+QueryDSL 에서 query 필드 내에 사용할 수 있는 연산들은 아래와 같습니다.
+
+- range
+- bool : must, must\_not, should, filter
+- relevancy 
+- full text query
+- match
+- match\_phrase query
+- multi-match query
+- match all
 
 
 
 <br/>
+
+QueryDSL 을 통해 조회를 한 후에 돌려받는 결과값의 형식은 아래와 같습니다.
+
+```json
+{
+    "took": "", // 얼마나 걸렸는지
+    "timed_out": "", // timed_out 발생 여부
+    "shards": {
+        "total": "", // Query 요청시 Query 가 요청된 전체 샤드 수
+        "successful": "", // Query 에 성공적으로 응답한 샤드 수
+        "failed": "" // Query 에 실패한 샤드 수
+    },
+    "hits": {
+        "total" : "", // Query 를 통해 검색(hit)된 문서의 전체 수,
+        "max_score" : "", // Query 에 대한 결과밧 중 문서의 score 중 가장 높은 값
+        "hits": "" // Query 를 통해 검색된 결과 항목들
+    }
+}
+```
+
+<br/>
+
+### range
+
+숫자, 날짜 등에 대해 range로 검색이 가능하며 gte, lte , ge, le 등과 같은 연산을 제공합니다.<br/>
+
+
+
+#### 예제 데이터
+
+```python
+POST _bulk
+{ "index": {"_index": "service_logs_index_202406", "_id": "1"} }
+{ "created": "2024-06-01 00:00:01", "status": "OK", "message": "OK", "occurred-service": "abc-coupon-api" , }
+{ "index": {"_index": "service_logs_index_202406", "_id": "2"} }
+{ "created": "2024-06-01 00:00:01", "status": "NETWORK_ERROR", "message": "PAYMENT_API_TIMEOUT", "occurred-service": "abc-payment-api", "vendor" : "inicis", "bank" : "toss" }
+{ "index": {"_index": "service_logs_index_202406", "_id": "3"} }
+{ "created": "2024-06-01 00:00:01", "status": "OK", "message": "OK", "occurred-service": "abc-payment-api", "vendor" : "NAVER", "bank" : "toss" }
+{ "index": {"_index": "service_logs_index_202406", "_id": "4"} }
+{ "created": "2024-06-01 00:00:01", "status": "OK", "message": "OK", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "service_logs_index_202406", "_id": "5"} }
+{ "created": "2024-06-01 00:00:01", "status": "ILLEGAL_ARGUMENT", "message": "DUPLICATED_PRIMARY_KEY", "occurred-service": "abc-comment-api" }
+{ "index": {"_index": "service_logs_index_202406", "_id": "6"} }
+{ "created": "2024-06-01 00:00:01", "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "service_logs_index_202406", "_id": "7"} }
+{ "created": "2024-06-01 00:00:01", "status": "OK", "message": "OK", "occurred-service": "abc-statistics-api" }
+{ "index": {"_index": "service_logs_index_202406", "_id": "8"} }
+{ "created": "2024-06-01 00:00:01", "status": "OK", "message": "OK", "occurred-service": "abc-order-api" }
+{ "index": {"_index": "service_logs_index_202406", "_id": "9"} }
+{ "created": "2024-06-01 00:00:01", "status": "CONNECTIONLESS", "message": "CIRCUIT_BREAKER_ON", "occurred-service": "abc-delivery-api" }
+```
+
+<br/>
+
+range 연산의 종류
+
+- lte (less than or equal to), gte (greater than or equal to)
+- lt (less than), gt (greater than)
+
+<br/>
+
+#### e.g. gte, lte
+
+```python
+GET service_logs_index_202406/_search 
+{
+  "query": {
+    "range": {
+      "id" : {
+        "gte": 1,
+        "lte": 2
+      }
+    }
+  }
+}
+```
+
+
+
+#### e.g. gte, lte
+
+아래 예제는 Mapping API 에서 더 자세히 다룰 예정입니다.
+
+```python
+GET service_logs_index_202406/_search 
+{
+  "query": {
+    "range": {
+      "created" : {
+        "gte": "2024-06-01 00:00:02",
+        "lte": "2024-06-01 00:00:07"
+      }
+    }
+  }
+}
+```
+
+<br/>
+
+### bool
+
+- must, must\_not, should, filter 와 같은 연산들이 있습니다.
+
+- must : 쿼리에 대해 true 로 매칭되는 모든 도큐먼트들을 조회합니다.
+- must\_not : 쿼리에 대해 false 로 메칭되는 모든 도큐먼트들을 조회합니다.
+- should : 쿼리에 해당하는 도큐먼트 들의 점수를 높입니다.
+- filter: 쿼리에 대해 매칭되는(=true) 모든 도큐먼트들을 필터링합니다. 스코어 계산은 하지 않으며 score 계산을 하지 않기에 must 보다는 속도가 빠르며 캐싱이 가능합니다.
+
+
+
+#### 형식
+
+```python
+GET {인덱스명}/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { ... }, …
+      ],
+      "must_not": [
+        { ... }, …
+      ],
+      "should": [
+        { ... }, …
+      ],
+      "filter": [
+        { ... }, …
+      ]
+    }
+  }
+}
+```
+
+<br/>
+
+
+
+#### 예제 데이터
+
+```python
+POST _bulk
+{ "index": {"_index": "user_comment_history_202406", "_id": "1"} }
+{ "created": "2024-06-01 00:00:01", "title": "Doby 는 자유에요", "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ", "author_id": 1, "occurred-service": "abc-coupon-api"}
+{ "index": {"_index": "user_comment_history_202406", "_id": "2"} }
+{ "created": "2024-06-01 00:00:01", "title": "가입인사드립니다.", "content": "안녕하세요. 반갑습니다.", "author_id": 2, "occurred-service": "abc-payment-api" }
+```
+
+<br/>
+
+#### e.g. 
+
+```python
+GET user_comment_history_202406/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"term" : {"author_id": 1}}
+      ]
+    }
+  }
+}
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 1,
+      "relation": "eq"
+    },
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "user_comment_history_202406",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "created": "2024-06-01 00:00:01",
+          "title": "Doby 는 자유에요",
+          "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ",
+          "author_id": 1,
+          "occurred-service": "abc-coupon-api"
+        }
+      }
+    ]
+  }
+}
+```
+
+
+
+
+
+
+
+#### e.g. range 와 함께 쓰기
+
+```python
+GET user_comment_history_202406/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "author_id": {
+              "gte": 1,
+              "lt": 2
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 1,
+      "relation": "eq"
+    },
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "user_comment_history_202406",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "created": "2024-06-01 00:00:01",
+          "title": "Doby 는 자유에요",
+          "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ",
+          "author_id": 1,
+          "occurred-service": "abc-coupon-api"
+        }
+      }
+    ]
+  }
+}
+```
+
+<br/>
+
+### relevancy
+
+정확도에 대한 지표입니다. score 라는 값을 통해서 판단 가능합니다. BM25 라는 것을 사용하며 공식은 아래와 같습니다.
+
+![](https://wikimedia.org/api/rest_v1/media/math/render/svg/8624885ce5cd14936807927801f6d29c315d3828)
+
+> 출처 : https://en.wikipedia.org/wiki/Okapi_BM25
+
+> 자세한 설명은 [Okapi BM25란 무엇인가? (TF-IDF와 비교)](https://simonezz.tistory.com/41) 을 참고해주세요.
+
+<br/>
+
+
+
+score 는 검색 결과가 얼마나 일치하는 지를 의미합니다.
+
+- TF (Term Frequency) : 문서에서 특정 단어의 출현 빈도. 도큐먼트 내에 텀이 많으면 많을 수록 관련도가 높아집니다.
+- IDF (Inverse Document Frequency) : 전체 문서 들 에서 나머지 문서에서 해당 단어가 몇 번 사용되었는지를 의미하는 지표입니다. Term 이 포함된 도큐먼트 갯수가 많을 수록 Term 에 대한 점수가 감소하게 됩니다. 
+- Field Length : 도큐먼트에서 필드 길이가 짧은 필드에 있는 텀의 중요도가 더 큽니다. 텍스트 길이가 짧은 필드에 검색어를 포함할 수록 점수가 높아집니다.
+
+<br/>
+
+### match
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query.html
+
+<br/>
+
+
+
+- 텍스트와 매칭이 되는 도큐먼트 들을 검색하는 데에 사용되는 QueryDSL 입니다.
+- 텍스트는 보통 Analyzer 를 이용해서 분석된 후 검색되는데, Analyzer 는 일반적으로 Standard Analyzer 가 기본으로 설정되어 있습니다.
+
+
+
+#### 예제 데이터
+
+```python
+POST _bulk
+{ "index": {"_index": "user_comment_history_202406", "_id": "1"} }
+{ "created": "2024-06-01 00:00:01", "title": "Doby 는 자유에요", "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ", "author_id": 1, "occurred-service": "abc-coupon-api"}
+{ "index": {"_index": "user_comment_history_202406", "_id": "2"} }
+{ "created": "2024-06-01 00:00:01", "title": "가입인사드립니다.", "content": "안녕하세요. 반갑습니다.", "author_id": 2, "occurred-service": "abc-payment-api" }
+```
+
+<br/>
+
+e.g. 
+
+```python
+GET user_comment_history_202406/_search
+{
+  "query": {
+    "match": {
+      "title": {
+        "query": "Doby"
+      }
+    }
+  }
+}
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 1,
+      "relation": "eq"
+    },
+    "max_score": 0.5754429,
+    "hits": [
+      {
+        "_index": "user_comment_history_202406",
+        "_id": "1",
+        "_score": 0.5754429,
+        "_source": {
+          "created": "2024-06-01 00:00:01",
+          "title": "Doby 는 자유에요",
+          "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ",
+          "author_id": 1,
+          "occurred-service": "abc-coupon-api"
+        }
+      }
+    ]
+  }
+}
+```
+
+<br/>
+
+
+
+### match\_phrase query
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query-phrase.html<br/>
+
+
+
+띄워쓰기까지 포함해서 정확하게 일치되는 phrase 를 검색할 때 사용됩니다. "slop" 이라는 것을 설정가능한데 slop 은 지정된 숫자만큼 단어 사이에 다른 검색어가 들어가는 것을 허용하는 것을 의미합니다.
+
+
+
+#### 예제 데이터
+
+```python
+POST _bulk
+{ "index": {"_index": "user_comment_history_202406", "_id": "1"} }
+{ "created": "2024-06-01 00:00:01", "title": "Doby 는 자유에요", "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ", "author_id": 1, "occurred-service": "abc-coupon-api"}
+{ "index": {"_index": "user_comment_history_202406", "_id": "2"} }
+{ "created": "2024-06-01 00:00:01", "title": "가입인사드립니다.", "content": "안녕하세요. 반갑습니다.", "author_id": 2, "occurred-service": "abc-payment-api" }
+```
+
+<br/>
+
+#### e.g.
+
+```python
+GET user_comment_history_202406/_search
+{
+  "query": {
+    "match_phrase": {
+      "content": {
+        "query": "이 메시지는 2024년 6월 도비로부터"
+      }
+    }
+  }
+}
+```
+
+<br/>
+
+출력결과
+
+```plain
+GET user_comment_history_202406/_search
+{
+  "query": {
+    "match_phrase": {
+      "content": {
+        "query": "이 메시지는 2024년 6월 도비로부터"
+      }
+    }
+  }
+}
+```
+
+<br/>
+
+
+
+### multi-match query
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html<br/>
+
+
+
+#### 예제 데이터
+
+```python
+POST _bulk
+{ "index": {"_index": "user_comment_history_202406", "_id": "1"} }
+{ "created": "2024-06-01 00:00:01", "title": "Doby 는 자유에요", "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ", "author_id": 1, "occurred-service": "abc-coupon-api"}
+{ "index": {"_index": "user_comment_history_202406", "_id": "2"} }
+{ "created": "2024-06-01 00:00:01", "title": "가입인사드립니다.", "content": "안녕하세요. 반갑습니다.", "author_id": 2, "occurred-service": "abc-payment-api" }
+```
+
+<br/>
+
+#### e.g.
+
+```python
+GET user_comment_history_202406/_search
+{
+  "query": {
+    "multi_match": {
+      "query": 2024,
+      "fields": ["content", "created_at"]
+    }
+  }
+}
+```
+
+<br/>
+
+
+
+### match all
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-all-query.html
+
+#### 예제 데이터
+
+```python
+POST _bulk
+{ "index": {"_index": "user_comment_history_202406", "_id": "1"} }
+{ "created": "2024-06-01 00:00:01", "title": "Doby 는 자유에요", "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ", "author_id": 1, "occurred-service": "abc-coupon-api"}
+{ "index": {"_index": "user_comment_history_202406", "_id": "2"} }
+{ "created": "2024-06-01 00:00:01", "title": "가입인사드립니다.", "content": "안녕하세요. 반갑습니다.", "author_id": 2, "occurred-service": "abc-payment-api" }
+```
+
+<br/>
+
+
+
+#### e.g.
+
+```python
+GET user_comment_history_202406/_search
+{
+  "query": {
+    "match_all": {
+      
+    }
+  }
+}
+```
+
+<br/>
+
+출력결과
+
+```plain
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": {
+      "value": 2,
+      "relation": "eq"
+    },
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "user_comment_history_202406",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "created": "2024-06-01 00:00:01",
+          "title": "Doby 는 자유에요",
+          "content": "이 메시지는 2024년 6월 도비로부터 시작되어... ",
+          "author_id": 1,
+          "occurred-service": "abc-coupon-api"
+        }
+      },
+      {
+        "_index": "user_comment_history_202406",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "created": "2024-06-01 00:00:01",
+          "title": "가입인사드립니다.",
+          "content": "안녕하세요. 반갑습니다.",
+          "author_id": 2,
+          "occurred-service": "abc-payment-api"
+        }
+      }
+    ]
+  }
+}
+```
+
+<br/>
+
+
+
+### Full Text Query
+
+https://www.elastic.co/guide/en/elasticsearch/reference/current/full-text-queries.html<br/>
+
+
+
+Full Text Query 를 사용하면 텍스트 필드를 검색할 수 있습니다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
